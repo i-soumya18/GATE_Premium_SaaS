@@ -1,0 +1,11 @@
+{
+  "status": "completed",
+  "running_cost": 0.7120305,
+  "processed_pages": 1072,
+  "total_pages": 1073,
+  "budget_limit": 1.0,
+  "extracted_count": 2487,
+  "diagrams_count": 451,
+  "current_paper_index": 27,
+  "current_page": 39
+}

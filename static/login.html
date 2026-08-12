@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GATE CBT Portal - Sign In</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 10% 20%, rgb(18, 14, 33) 0%, rgb(9, 7, 16) 90%);
+            color: #f1f3f9;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .auth-container {
+            width: 100%;
+            max-width: 440px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            padding: 40px;
+            animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .logo {
+            text-align: center;
+            font-size: 1.8rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .logo i {
+            color: #8b5cf6;
+        }
+        .logo .accent {
+            background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 25px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: #8b5cf6;
+            color: #fff;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .input-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px 12px 42px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+        .form-group input:focus {
+            border-color: #8b5cf6;
+            outline: none;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #8b5cf6;
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .submit-btn:hover {
+            background: #7c3aed;
+        }
+        .error-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        <div class="logo">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>GATE <span class="accent">CBT SaaS</span></span>
+        </div>
+
+        <div class="tabs">
+            <button id="tab-login" class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+            <button id="tab-register" class="tab-btn" onclick="switchTab('register')">Register</button>
+        </div>
+
+        <div id="error-message" class="error-box"></div>
+
+        <form id="auth-form" onsubmit="handleAuth(event)">
+            <!-- Username -->
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="username" placeholder="Enter your username" required>
+                </div>
+            </div>
+
+            <!-- Email (Register only) -->
+            <div id="email-group" class="form-group hidden">
+                <label for="email">Email Address</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="email" placeholder="name@example.com">
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+            </div>
+
+            <button type="submit" id="submit-btn" class="submit-btn">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> <span id="submit-text">Sign In</span>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        let currentMode = 'login';
+
+        function switchTab(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${mode}`).classList.add('active');
+            
+            const emailGroup = document.getElementById('email-group');
+            const emailInput = document.getElementById('email');
+            const submitText = document.getElementById('submit-text');
+            const submitBtnIcon = document.querySelector('#submit-btn i');
+
+            document.getElementById('error-message').style.display = 'none';
+
+            if (mode === 'login') {
+                emailGroup.classList.add('hidden');
+                emailInput.required = false;
+                submitText.textContent = 'Sign In';
+                submitBtnIcon.className = 'fa-solid fa-arrow-right-to-bracket';
+            } else {
+                emailGroup.classList.remove('hidden');
+                emailInput.required = true;
+                submitText.textContent = 'Create Account';
+                submitBtnIcon.className = 'fa-solid fa-user-plus';
+            }
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const errBox = document.getElementById('error-message');
+            errBox.style.display = 'none';
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const email = document.getElementById('email').value.trim();
+
+            const url = currentMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+            const body = currentMode === 'login' 
+                ? { username, password } 
+                : { username, email, password };
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || 'Authentication failed');
+                }
+
+                // Store token and username
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('username', data.username);
+
+                // Redirect
+                window.location.href = '/exam';
+            } catch (err) {
+                errBox.textContent = err.message;
+                errBox.style.display = 'block';
+            }
+        }
+
+        // Auto-redirect if already logged in
+        if (localStorage.getItem('token')) {
+            window.location.href = '/exam';
+        }
+    </script>
+</body>
+</html>
