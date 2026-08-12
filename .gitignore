@@ -1,1 +1,1 @@
-/.env
+.venv\n__pycache__\n.env\n*.db
