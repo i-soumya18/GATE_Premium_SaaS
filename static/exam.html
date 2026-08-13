@@ -40,6 +40,8 @@
             <button class="nav-tab active" onclick="switchPortalTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
             <button class="nav-tab" onclick="switchPortalTab('leetcode')"><i class="fa-solid fa-code"></i> LeetCode Practice</button>
             <button class="nav-tab" onclick="switchPortalTab('mock')"><i class="fa-solid fa-file-signature"></i> Mock Tests</button>
+            <button class="nav-tab" onclick="switchPortalTab('resources')"><i class="fa-solid fa-book-open"></i> Study Resources</button>
+            <button class="nav-tab" onclick="switchPortalTab('flashcards')"><i class="fa-solid fa-bolt"></i> Flashcards</button>
         </nav>
 
         <div class="header-actions">
@@ -101,6 +103,37 @@
                     </div>
                     <div class="card-body chart-container">
                         <canvas id="mastery-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Upgrades: AI Weakness and Heatmap -->
+            <div class="dashboard-upgrades-grid">
+                <!-- Weak Areas Card -->
+                <div class="portal-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-triangle-exclamation" style="color:#ff5c75;"></i> AI Performance Review & Weak Areas</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="subtitle" style="margin-bottom:15px; font-size:0.9rem;">We analyze your practice data to pinpoint topic gaps and suggest target studies.</p>
+                        <div class="weak-areas-list" id="weak-areas-list">
+                            <div class="no-data" style="padding: 20px 0;">
+                                <p><i class="fa-solid fa-circle-info"></i> Solve more practice questions to trigger AI weakness analysis.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Study Heatmap Activity Card -->
+                <div class="portal-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-calendar-days"></i> Study Activity & Focus Streak</h2>
+                    </div>
+                    <div class="card-body heatmap-container">
+                        <p class="heatmap-info">Visual tracking of focused study sessions logged over the past 14 days.</p>
+                        <div class="heatmap-grid" id="study-heatmap">
+                            <!-- Populated dynamically -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -191,34 +224,89 @@
                 <div class="portal-sidebar-column">
                     <div class="portal-card custom-test-card">
                         <div class="card-header">
-                            <h2><i class="fa-solid fa-sliders"></i> Test Creator</h2>
+                            <h2><i class="fa-solid fa-sliders"></i> LeetPractice Creator</h2>
                         </div>
                         <div class="card-body">
+                            <!-- Subject Selector -->
                             <div class="form-group">
                                 <label for="custom-subject">Subject</label>
-                                <select id="custom-subject">
+                                <select id="custom-subject" onchange="onCustomSubjectChange()">
                                     <option value="CS">Computer Science (CS)</option>
                                     <option value="DA">Data Science & AI (DA)</option>
                                 </select>
                             </div>
+
+                            <!-- Topic Checklist Selector -->
                             <div class="form-group">
-                                <label for="custom-size">Questions Size</label>
-                                <select id="custom-size">
-                                    <option value="10">10 Questions (Quick Practice)</option>
-                                    <option value="20">20 Questions (Standard Practice)</option>
-                                    <option value="30">30 Questions (Mini Mock)</option>
-                                    <option value="65">65 Questions (Full Exam)</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Target Types</label>
-                                <div class="checkbox-options">
-                                    <label><input type="checkbox" id="type-mcq" checked> MCQ (Single Choice)</label>
-                                    <label><input type="checkbox" id="type-msq" checked> MSQ (Multiple Select)</label>
-                                    <label><input type="checkbox" id="type-nat" checked> NAT (Numerical Answer)</label>
+                                <div class="topic-header">
+                                    <label>Topics Selection</label>
+                                    <div class="topic-toggle-btns">
+                                        <button type="button" class="text-btn" onclick="toggleAllTopics(true)">Select All</button>
+                                        <span class="divider">|</span>
+                                        <button type="button" class="text-btn" onclick="toggleAllTopics(false)">Clear</button>
+                                    </div>
+                                </div>
+                                <div id="custom-topics-list" class="topics-checklist-container">
+                                    <!-- Populated dynamically via JS -->
                                 </div>
                             </div>
-                            <button class="primary-btn btn-block" onclick="generateCustomTest()">
+
+                            <!-- Difficulty Selector (Pills) -->
+                            <div class="form-group">
+                                <label>Difficulties</label>
+                                <div class="pill-group" id="custom-difficulty-group">
+                                    <button type="button" class="pill-btn active" data-value="Easy" onclick="togglePill(this)">Easy</button>
+                                    <button type="button" class="pill-btn active" data-value="Medium" onclick="togglePill(this)">Medium</button>
+                                    <button type="button" class="pill-btn active" data-value="Hard" onclick="togglePill(this)">Hard</button>
+                                </div>
+                            </div>
+
+                            <!-- Question Types Selector (Pills) -->
+                            <div class="form-group">
+                                <label>Question Types</label>
+                                <div class="pill-group" id="custom-type-group">
+                                    <button type="button" class="pill-btn active" data-value="MCQ" onclick="togglePill(this)">MCQ</button>
+                                    <button type="button" class="pill-btn active" data-value="MSQ" onclick="togglePill(this)">MSQ</button>
+                                    <button type="button" class="pill-btn active" data-value="NAT" onclick="togglePill(this)">NAT</button>
+                                </div>
+                            </div>
+
+                            <!-- Question Status Selector (Pills) -->
+                            <div class="form-group">
+                                <label>Question Status</label>
+                                <div class="pill-group status-pills" id="custom-status-group">
+                                    <button type="button" class="pill-btn active" data-value="all" onclick="selectStatusPill(this)">All</button>
+                                    <button type="button" class="pill-btn" data-value="unattempted" onclick="selectStatusPill(this)">Unattempted</button>
+                                    <button type="button" class="pill-btn" data-value="incorrect" onclick="selectStatusPill(this)">Incorrect</button>
+                                    <button type="button" class="pill-btn" data-value="solved" onclick="selectStatusPill(this)">Solved</button>
+                                </div>
+                            </div>
+
+                            <!-- Count Slider -->
+                            <div class="form-group">
+                                <div class="slider-header">
+                                    <label for="custom-size-slider">Questions Size</label>
+                                    <span class="value" id="custom-size-val">10</span>
+                                </div>
+                                <input type="range" id="custom-size-slider" min="5" max="65" step="5" value="10" oninput="onCustomSizeSlider(this)">
+                            </div>
+
+                            <!-- Time Mode Selector -->
+                            <div class="form-group">
+                                <label for="custom-time-mode">Time Mode</label>
+                                <select id="custom-time-mode" onchange="updateCustomTestCount()">
+                                    <option value="standard">Standard Exam (2.5 min/q)</option>
+                                    <option value="sprint">Speed Run (1.5 min/q)</option>
+                                    <option value="study">Study Mode (No Timer)</option>
+                                </select>
+                            </div>
+
+                            <!-- Available matching count badge -->
+                            <div class="custom-count-row">
+                                <span class="count-badge" id="custom-count-badge">Available Questions: 0</span>
+                            </div>
+
+                            <button class="primary-btn btn-block" id="custom-launch-btn" onclick="generateCustomTest()">
                                 <i class="fa-solid fa-bolt"></i> Launch Exam Session
                             </button>
                         </div>
@@ -234,6 +322,104 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- TAB 4: STUDY RESOURCES HUB                                   -->
+        <!-- ============================================================ -->
+        <section id="resources-view" class="portal-tab-view view-section hidden">
+            <div class="hub-subject-selector">
+                <button class="subject-btn active" id="btn-stream-cs" onclick="switchResourceStream('CS')"><i class="fa-solid fa-laptop-code"></i> GATE CS</button>
+                <button class="subject-btn" id="btn-stream-da" onclick="switchResourceStream('DA')"><i class="fa-solid fa-chart-line"></i> GATE DA</button>
+            </div>
+            
+            <div class="study-hub-container">
+                <!-- Left Sidebar: Topics list -->
+                <aside class="hub-sidebar" id="hub-sidebar-topics">
+                    <span class="hub-sidebar-title">Syllabus Topics</span>
+                    <!-- Dynamic topic button list -->
+                </aside>
+                
+                <!-- Right Area: Resource Lists -->
+                <div class="hub-content">
+                    <div class="hub-header">
+                        <h2 id="hub-active-topic-title">Algorithms</h2>
+                        <span class="badge" id="hub-topic-progress">0% Completed</span>
+                    </div>
+
+                    <!-- Quick Quiz Banner -->
+                    <div class="quick-quiz-banner">
+                        <div class="quiz-banner-text">
+                            <h3>Topic Quick Quiz</h3>
+                            <p>Ready to test your knowledge? Generate a dynamic 5-question mock set from this topic.</p>
+                        </div>
+                        <button class="btn-quiz-start" onclick="generateTopicQuickQuiz()"><i class="fa-solid fa-rocket"></i> Start Quick Quiz</button>
+                    </div>
+
+                    <!-- Videos Section -->
+                    <div class="resources-section">
+                        <h3 style="margin-bottom: 15px;"><i class="fa-brands fa-youtube" style="color: #ef4444;"></i> Video Lectures & Playlists</h3>
+                        <div class="resources-grid" id="videos-grid">
+                            <!-- Video cards populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Study Notes Section -->
+                    <div class="resources-section">
+                        <h3 style="margin-bottom: 15px;"><i class="fa-solid fa-file-pdf" style="color: #10b981;"></i> Standard Textbooks & Reference Notes</h3>
+                        <div class="resources-grid" id="materials-grid">
+                            <!-- Material cards populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- TAB 5: FLASHCARDS CENTER                                     -->
+        <!-- ============================================================ -->
+        <section id="flashcards-view" class="portal-tab-view view-section hidden">
+            <div class="portal-hero" style="margin-bottom: 20px;">
+                <h1>Formula & Theorem Revision Cards</h1>
+                <p>Use spaced-repetition flashcards to memorize essential mathematical formulas, proofs, and definitions.</p>
+            </div>
+
+            <div class="flashcards-container">
+                <div class="flashcard-deck-selector">
+                    <select id="flashcard-topic-select" onchange="loadFlashcards()" style="padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 0.9rem;">
+                        <option value="">All Topics</option>
+                        <!-- Dynamic list -->
+                    </select>
+                </div>
+
+                <!-- 3D flipping card wrapper -->
+                <div class="flashcard-wrapper" id="flashcard-card" onclick="flipFlashcard()">
+                    <div class="flashcard-inner">
+                        <!-- Front of Card -->
+                        <div class="flashcard-front">
+                            <span class="card-topic-tag" id="flashcard-topic-tag">Algorithms</span>
+                            <div class="card-text" id="flashcard-front-text">What is the Master Theorem?</div>
+                            <span class="card-flip-prompt"><i class="fa-solid fa-rotate"></i> Click card to flip</span>
+                        </div>
+                        <!-- Back of Card -->
+                        <div class="flashcard-back">
+                            <span class="card-topic-tag" id="flashcard-topic-tag-back">Algorithms</span>
+                            <div class="card-text" id="flashcard-back-text">Answer explanation here...</div>
+                            <span class="card-flip-prompt"><i class="fa-solid fa-rotate"></i> Click card to flip</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation & spaced repetition buttons -->
+                <div class="flashcard-buttons" style="margin-top: 15px;">
+                    <button class="flashcard-btn review-later" onclick="nextFlashcard(false)"><i class="fa-solid fa-clock"></i> Review Later</button>
+                    <button class="flashcard-btn know-it" onclick="nextFlashcard(true)"><i class="fa-solid fa-circle-check"></i> I Know This</button>
+                </div>
+                
+                <div style="font-size: 0.9rem; opacity: 0.7; margin-top: 10px;" id="flashcard-count-indicator">
+                    Card 1 of 10
                 </div>
             </div>
         </section>
@@ -548,6 +734,18 @@
         let activePortalTab = 'dashboard';
         let currentTheme = 'glass-theme';
 
+        // Study Hub, Flashcard and Pomodoro states
+        let activeResourceStream = 'CS'; 
+        let activeResourceTopic = '';    
+        let studyResources = { materials: [], videos: [] };
+        let flashcardDeck = [];
+        let currentFlashcardIndex = 0;
+        let pomodoroTimerInterval = null;
+        let pomodoroTimeLeft = 25 * 60; 
+        let pomodoroIsRunning = false;
+        let pomoMinutesLoggedThisTurn = 0;
+        let ambientAudio = null;
+
         // Draggable calculator initialization
         window.addEventListener('DOMContentLoaded', async () => {
             // Set username display
@@ -599,7 +797,14 @@
             document.querySelectorAll('.portal-tab-view').forEach(view => view.classList.add('hidden'));
 
             // Toggle target tab
-            const targetBtn = Array.from(document.querySelectorAll('.portal-nav-tabs .nav-tab')).find(b => b.textContent.includes(tabId === 'leetcode' ? 'LeetCode' : (tabId === 'mock' ? 'Mock' : 'Dashboard')));
+            const targetBtn = Array.from(document.querySelectorAll('.portal-nav-tabs .nav-tab')).find(b => {
+                const txt = b.textContent.toLowerCase();
+                if (tabId === 'leetcode') return txt.includes('leetcode');
+                if (tabId === 'mock') return txt.includes('mock');
+                if (tabId === 'resources') return txt.includes('resources');
+                if (tabId === 'flashcards') return txt.includes('flashcards');
+                return txt.includes('dashboard');
+            });
             if (targetBtn) targetBtn.classList.add('active');
             
             document.getElementById(`${tabId}-view`).classList.remove('hidden');
@@ -613,6 +818,11 @@
             } else if (tabId === 'mock') {
                 await fetchPapers();
                 await fetchHistory();
+                onCustomSubjectChange();
+            } else if (tabId === 'resources') {
+                await loadStudyHub();
+            } else if (tabId === 'flashcards') {
+                await loadFlashcardsCenter();
             }
         }
 
@@ -699,6 +909,9 @@
                         }
                     }
                 });
+
+                // Load upgraded weakness cards and study log heatmap
+                await loadWeakAreasAndHeatmap();
 
             } catch (err) {
                 console.error("Error loading analytics:", err);
@@ -810,7 +1023,10 @@
                 // Render diagram
                 const diagContainer = document.getElementById('solve-diagram-container');
                 const diagImg = document.getElementById('solve-q-diagram');
-                if (q.diagram_path) {
+                if (q.diagram_base64) {
+                    diagImg.src = `data:image/png;base64,${q.diagram_base64}`;
+                    diagContainer.classList.remove('hidden');
+                } else if (q.diagram_path) {
                     diagImg.src = `/${q.diagram_path}`;
                     diagContainer.classList.remove('hidden');
                 } else {
@@ -1113,45 +1329,178 @@
             }
         }
 
+        const SUBJECT_TOPICS = {
+            'CS': [
+                'Engineering Mathematics',
+                'Discrete Mathematics',
+                'Digital Logic',
+                'Computer Organization and Architecture (COA)',
+                'Programming and Data Structures',
+                'Algorithms',
+                'Theory of Computation (TOC)',
+                'Compiler Design',
+                'Operating Systems (OS)',
+                'Databases (DBMS)',
+                'Computer Networks (CN)',
+                'General Aptitude'
+            ],
+            'DA': [
+                'Linear Algebra',
+                'Calculus and Optimization',
+                'Probability and Statistics',
+                'Python Programming and Data Structures',
+                'Algorithms',
+                'Database Management and Warehousing',
+                'Machine Learning (ML)',
+                'Artificial Intelligence (AI)',
+                'General Aptitude'
+            ]
+        };
+
+        function onCustomSubjectChange() {
+            const subject = document.getElementById('custom-subject').value;
+            const topicsList = document.getElementById('custom-topics-list');
+            const topics = SUBJECT_TOPICS[subject] || [];
+            
+            topicsList.innerHTML = topics.map(t => `
+                <label class="topic-checkbox-label">
+                    <input type="checkbox" name="custom-topic" value="${t}" checked onchange="updateCustomTestCount()">
+                    <span class="checkbox-styled"></span>
+                    <span class="topic-text">${t}</span>
+                </label>
+            `).join('');
+            
+            updateCustomTestCount();
+        }
+
+        function toggleAllTopics(select) {
+            document.querySelectorAll('input[name="custom-topic"]').forEach(cb => {
+                cb.checked = select;
+            });
+            updateCustomTestCount();
+        }
+
+        function togglePill(btn) {
+            btn.classList.toggle('active');
+            updateCustomTestCount();
+        }
+
+        function selectStatusPill(btn) {
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateCustomTestCount();
+        }
+
+        function onCustomSizeSlider(slider) {
+            document.getElementById('custom-size-val').textContent = slider.value;
+            updateCustomTestCount();
+        }
+
+        async function updateCustomTestCount() {
+            const subject = document.getElementById('custom-subject').value;
+            
+            const topics = Array.from(document.querySelectorAll('input[name="custom-topic"]:checked'))
+                .map(cb => cb.value);
+                
+            const difficulties = Array.from(document.querySelectorAll('#custom-difficulty-group .pill-btn.active'))
+                .map(b => b.getAttribute('data-value'));
+                
+            const types = Array.from(document.querySelectorAll('#custom-type-group .pill-btn.active'))
+                .map(b => b.getAttribute('data-value'));
+                
+            const statusActive = document.querySelector('#custom-status-group .pill-btn.active');
+            const status = statusActive ? statusActive.getAttribute('data-value') : 'all';
+            
+            const badge = document.getElementById('custom-count-badge');
+            const launchBtn = document.getElementById('custom-launch-btn');
+            
+            if (topics.length === 0 || difficulties.length === 0 || types.length === 0) {
+                badge.textContent = "Available Questions: 0 (Select filters)";
+                badge.className = "count-badge empty";
+                launchBtn.disabled = true;
+                return;
+            }
+            
+            const payload = {
+                subject: subject,
+                topics: topics,
+                difficulties: difficulties,
+                types: types,
+                status: status,
+                limit: 10
+            };
+            
+            try {
+                const res = await fetchAuth('/api/exam/custom-count', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                
+                badge.textContent = `Available Questions: ${data.count}`;
+                if (data.count > 0) {
+                    badge.className = "count-badge has-data";
+                    launchBtn.disabled = false;
+                } else {
+                    badge.className = "count-badge empty";
+                    launchBtn.disabled = true;
+                }
+            } catch (err) {
+                console.error("Error updating custom count:", err);
+                badge.textContent = "Available Questions: Error";
+                badge.className = "count-badge error";
+                launchBtn.disabled = true;
+            }
+        }
+
         async function generateCustomTest() {
             const subject = document.getElementById('custom-subject').value;
-            const size = parseInt(document.getElementById('custom-size').value);
-            const allowMcq = document.getElementById('type-mcq').checked;
-            const allowMsq = document.getElementById('type-msq').checked;
-            const allowNat = document.getElementById('type-nat').checked;
+            const limit = parseInt(document.getElementById('custom-size-slider').value);
+            
+            const topics = Array.from(document.querySelectorAll('input[name="custom-topic"]:checked'))
+                .map(cb => cb.value);
+                
+            const difficulties = Array.from(document.querySelectorAll('#custom-difficulty-group .pill-btn.active'))
+                .map(b => b.getAttribute('data-value'));
+                
+            const types = Array.from(document.querySelectorAll('#custom-type-group .pill-btn.active'))
+                .map(b => b.getAttribute('data-value'));
+                
+            const statusActive = document.querySelector('#custom-status-group .pill-btn.active');
+            const status = statusActive ? statusActive.getAttribute('data-value') : 'all';
+            
+            const timeMode = document.getElementById('custom-time-mode').value;
 
-            if (!allowMcq && !allowMsq && !allowNat) {
-                alert("Please check at least one question type.");
+            if (topics.length === 0 || difficulties.length === 0 || types.length === 0) {
+                alert("Please select at least one topic, difficulty, and question type.");
                 return;
             }
 
+            const payload = {
+                subject: subject,
+                topics: topics,
+                difficulties: difficulties,
+                types: types,
+                status: status,
+                limit: limit
+            };
+
             try {
-                // Fetch filterable list matching criteria
-                const url = `/api/questions?subject=${subject}` + 
-                    (allowMcq && !allowMsq && !allowNat ? '&type=MCQ' : ''); // standard simple criteria
-                const res = await fetchAuth(url);
-                const questionsList = await res.json();
-
-                let filtered = questionsList.filter(q => {
-                    if (q.type === 'MCQ' && !allowMcq) return false;
-                    if (q.type === 'MSQ' && !allowMsq) return false;
-                    if (q.type === 'NAT' && !allowNat) return false;
-                    return true;
+                const res = await fetchAuth('/api/exam/generate-custom', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
                 });
-
-                if (filtered.length === 0) {
-                    alert("No matching questions found. Try selecting another combination.");
-                    return;
-                }
-
-                // Shuffle and grab subset
-                const selectedList = filtered.sort(() => 0.5 - Math.random()).slice(0, size);
                 
-                // Fetch full question bodies for the selected set
-                const questions = [];
-                for (let info of selectedList) {
-                    const qRes = await fetchAuth(`/api/questions/${info.id}`);
-                    questions.push(await qRes.json());
+                if (!res.ok) {
+                    throw new Error(await res.text());
+                }
+                
+                const questions = await res.json();
+
+                if (questions.length === 0) {
+                    alert("No matching questions found in the database.");
+                    return;
                 }
 
                 // Normalize index numbers
@@ -1159,10 +1508,40 @@
                     q.question_number = idx + 1;
                 });
 
-                initiateExamSession(subject, 0, "Custom Practice Set", questions, size * 2.5 * 60);
+                // Calculate time limit in seconds
+                let timeLimit = null;
+                if (timeMode === 'standard') {
+                    timeLimit = Math.round(questions.length * 2.5 * 60);
+                } else if (timeMode === 'sprint') {
+                    timeLimit = Math.round(questions.length * 1.5 * 60);
+                }
+
+                initiateExamSession(subject, 0, "Custom Practice Set", questions, timeLimit);
             } catch (err) {
                 alert(`Error building custom test: ${err.message}`);
             }
+        }
+
+        function updateTimerDisplay() {
+            if (!activeTest) return;
+            const timerEl = document.getElementById('timer-countdown');
+            if (!timerEl) return;
+            
+            if (activeTest.timeLeft === null || activeTest.timeLeft === undefined) {
+                timerEl.textContent = "Untimed";
+                return;
+            }
+            
+            const absTime = Math.abs(activeTest.timeLeft);
+            const hours = Math.floor(absTime / 3600);
+            const minutes = Math.floor((absTime % 3600) / 60);
+            const seconds = absTime % 60;
+            
+            const hStr = hours > 0 ? `${hours}:` : "";
+            const mStr = String(minutes).padStart(2, '0');
+            const sStr = String(seconds).padStart(2, '0');
+            
+            timerEl.textContent = `${activeTest.timeLeft < 0 ? '-' : ''}${hStr}${mStr}:${sStr}`;
         }
 
         // 9. Exam Console Core Logic
@@ -1200,21 +1579,31 @@
             if (activeTest.timerInterval) clearInterval(activeTest.timerInterval);
             updateTimerDisplay();
             
-            activeTest.timerInterval = setInterval(() => {
-                activeTest.timeLeft--;
-                const currentQ = activeTest.questions[activeTest.currentQuestionIndex];
-                if (currentQ) {
-                    activeTest.timeSpent[currentQ.id]++;
-                }
+            if (totalTimeSeconds !== null && totalTimeSeconds !== undefined && totalTimeSeconds > 0) {
+                activeTest.timerInterval = setInterval(() => {
+                    activeTest.timeLeft--;
+                    const currentQ = activeTest.questions[activeTest.currentQuestionIndex];
+                    if (currentQ) {
+                        activeTest.timeSpent[currentQ.id]++;
+                    }
 
-                updateTimerDisplay();
+                    updateTimerDisplay();
 
-                if (activeTest.timeLeft <= 0) {
-                    clearInterval(activeTest.timerInterval);
-                    alert("Time's up! Submitting answers.");
-                    submitExam();
-                }
-            }, 1000);
+                    if (activeTest.timeLeft <= 0) {
+                        clearInterval(activeTest.timerInterval);
+                        alert("Time's up! Submitting answers.");
+                        submitExam();
+                    }
+                }, 1000);
+            } else {
+                // Study mode / Untimed
+                activeTest.timerInterval = setInterval(() => {
+                    const currentQ = activeTest.questions[activeTest.currentQuestionIndex];
+                    if (currentQ) {
+                        activeTest.timeSpent[currentQ.id]++;
+                    }
+                }, 1000);
+            }
         }
 
         function switchView(viewId) {
@@ -1245,7 +1634,10 @@
 
             const diagWrapper = document.getElementById('q-display-diagram-container');
             const diagImg = document.getElementById('q-display-diagram');
-            if (q.diagram_path) {
+            if (q.diagram_base64) {
+                diagImg.src = `data:image/png;base64,${q.diagram_base64}`;
+                diagWrapper.classList.remove('hidden');
+            } else if (q.diagram_path) {
                 diagImg.src = `/${q.diagram_path}`;
                 diagWrapper.classList.remove('hidden');
             } else {
@@ -1605,7 +1997,6 @@
         // Theme Toggle Settings
         function toggleTheme() {
             const body = document.body;
-            const themeLabel = document.getElementById('theme-label');
             if (currentTheme === 'glass-theme') {
                 body.classList.remove('glass-theme');
                 body.classList.add('official-theme');
@@ -1616,6 +2007,548 @@
                 currentTheme = 'glass-theme';
             }
         }
+
+        // ============================================================
+        // UPGRADED ANALYTICS: WEAK AREAS AND STUDY LOGS HEATMAP
+        // ============================================================
+        async function loadWeakAreasAndHeatmap() {
+            try {
+                const res = await fetchAuth('/api/analytics/weak-areas');
+                if (res.status === 401) return;
+                const data = await res.json();
+
+                // 1. Render Weak Areas list
+                const listEl = document.getElementById('weak-areas-list');
+                if (!listEl) return;
+
+                if (!data.weak_topics || data.weak_topics.length === 0) {
+                    listEl.innerHTML = `
+                        <div class="no-data" style="padding: 20px 0;">
+                            <p><i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Excellent! No immediate weakness areas detected.</p>
+                        </div>
+                    `;
+                } else {
+                    let html = '';
+                    data.recommendations.forEach(rec => {
+                        let recsHtml = '';
+                        rec.recs.forEach(r => {
+                            if (r.type === 'video') {
+                                recsHtml += `
+                                    <a class="rec-badge-item" href="javascript:void(0)" onclick="playVideo('${r.video_id}', '${r.title.replace(/'/g, "\\'")}')">
+                                        <i class="fa-brands fa-youtube" style="color:#ef4444;"></i> Watch: ${r.title}
+                                    </a>
+                                `;
+                            } else {
+                                recsHtml += `
+                                    <a class="rec-badge-item" href="${r.url}" target="_blank">
+                                        <i class="fa-solid fa-file-pdf" style="color:#10b981;"></i> Read: ${r.title}
+                                    </a>
+                                `;
+                            }
+                        });
+                        html += `
+                            <div class="weak-area-block">
+                                <div class="weak-area-header">
+                                    <span class="weak-area-name">${rec.topic}</span>
+                                    <span class="weak-area-pct">Accuracy: ${rec.accuracy}%</span>
+                                </div>
+                                <div class="weak-area-recs">
+                                    ${recsHtml || '<span style="font-size:0.8rem;opacity:0.6;">No resources seeded for this topic.</span>'}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    listEl.innerHTML = html;
+                }
+
+                // 2. Render Heatmap
+                const heatmapEl = document.getElementById('study-heatmap');
+                if (heatmapEl) {
+                    heatmapEl.innerHTML = '';
+                    data.heatmap.forEach(day => {
+                        const cell = document.createElement('div');
+                        let level = 'level-0';
+                        if (day.minutes > 0 && day.minutes < 15) level = 'level-1';
+                        else if (day.minutes >= 15 && day.minutes < 30) level = 'level-2';
+                        else if (day.minutes >= 30) level = 'level-3';
+
+                        cell.className = `heatmap-cell ${level}`;
+                        
+                        const dateObj = new Date(day.date);
+                        const dateStr = dateObj.toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+
+                        cell.innerHTML = `
+                            ${day.minutes > 0 ? day.minutes : ''}
+                            <span class="heatmap-cell-tooltip">${dateStr}: ${day.minutes} mins focus</span>
+                        `;
+                        heatmapEl.appendChild(cell);
+                    });
+                }
+
+            } catch (err) {
+                console.error("Error loading weak areas / heatmap:", err);
+            }
+        }
+
+        // ============================================================
+        // Study Hub & Video Theater logic
+        // ============================================================
+        async function loadStudyHub() {
+            try {
+                const res = await fetchAuth(`/api/resources?subject=${activeResourceStream}`);
+                if (res.status === 401) return;
+                studyResources = await res.json();
+                
+                const csTopics = [
+                    "General Aptitude", "Engineering Mathematics", "Discrete Mathematics", "Digital Logic", 
+                    "Computer Organization and Architecture (COA)", "Programming and Data Structures", 
+                    "Algorithms", "Theory of Computation (TOC)", "Compiler Design", 
+                    "Operating Systems (OS)", "Databases (DBMS)", "Computer Networks (CN)"
+                ];
+                const daTopics = [
+                    "General Aptitude", "Linear Algebra", "Calculus and Optimization", 
+                    "Probability and Statistics", "Python Programming and Data Structures", 
+                    "Algorithms", "Database Management and Warehousing", 
+                    "Machine Learning (ML)", "Artificial Intelligence (AI)"
+                ];
+                
+                const topics = activeResourceStream === 'CS' ? csTopics : daTopics;
+                
+                const sidebar = document.getElementById('hub-sidebar-topics');
+                sidebar.innerHTML = '<span class="hub-sidebar-title">Syllabus Topics</span>';
+                
+                topics.forEach(t => {
+                    const btn = document.createElement('button');
+                    btn.className = `topic-item-btn ${t === activeResourceTopic ? 'active' : ''}`;
+                    btn.onclick = () => selectTopic(t);
+                    
+                    const topicVids = studyResources.videos.filter(v => v.topic === t);
+                    const topicMats = studyResources.materials.filter(m => m.topic === t);
+                    const total = topicVids.length + topicMats.length;
+                    const solved = topicVids.filter(v => v.completed).length + topicMats.filter(m => m.completed).length;
+                    const pct = total > 0 ? Math.round((solved / total) * 100) : 0;
+                    
+                    btn.innerHTML = `
+                        <span>${t}</span>
+                        <span class="topic-progress-badge">${pct}%</span>
+                    `;
+                    sidebar.appendChild(btn);
+                });
+                
+                if (!activeResourceTopic && topics.length > 0) {
+                    selectTopic(topics[0]);
+                } else {
+                    selectTopic(activeResourceTopic);
+                }
+                
+            } catch (err) {
+                console.error("Error loading Study Hub:", err);
+            }
+        }
+
+        async function switchResourceStream(stream) {
+            activeResourceStream = stream;
+            activeResourceTopic = '';
+            document.getElementById('btn-stream-cs').classList.toggle('active', stream === 'CS');
+            document.getElementById('btn-stream-da').classList.toggle('active', stream === 'DA');
+            await loadStudyHub();
+        }
+
+        function selectTopic(topicName) {
+            activeResourceTopic = topicName;
+            
+            document.querySelectorAll('.topic-item-btn').forEach(btn => {
+                const isMatch = btn.querySelector('span').textContent === topicName;
+                btn.classList.toggle('active', isMatch);
+            });
+            
+            document.getElementById('hub-active-topic-title').textContent = topicName;
+            
+            const topicVids = studyResources.videos.filter(v => v.topic === topicName);
+            const topicMats = studyResources.materials.filter(m => m.topic === topicName);
+            
+            const total = topicVids.length + topicMats.length;
+            const completed = topicVids.filter(v => v.completed).length + topicMats.filter(m => m.completed).length;
+            const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+            document.getElementById('hub-topic-progress').textContent = `${pct}% Completed`;
+            
+            const vGrid = document.getElementById('videos-grid');
+            if (topicVids.length === 0) {
+                vGrid.innerHTML = '<div class="no-data" style="grid-column: 1/-1;">No video lectures seeded yet.</div>';
+            } else {
+                vGrid.innerHTML = topicVids.map(v => `
+                    <div class="resource-card">
+                        <span class="resource-badge video"><i class="fa-solid fa-video"></i> Video</span>
+                        <div class="resource-info">
+                            <h4>${v.title}</h4>
+                            <p class="resource-desc">${v.description}</p>
+                            <div class="resource-meta">
+                                <span><i class="fa-solid fa-clock"></i> ${v.duration_mins} mins</span>
+                                <span><i class="fa-solid fa-user"></i> ${v.channel_name}</span>
+                            </div>
+                        </div>
+                        <div class="resource-actions">
+                            <label class="progress-toggle">
+                                <input type="checkbox" ${v.completed ? 'checked' : ''} onchange="toggleResourceProgress('video', ${v.id}, this)">
+                                <span>Watched</span>
+                            </label>
+                            <button class="btn-watch" onclick="playVideo('${v.video_id}', '${v.title.replace(/'/g, "\\'")}')">
+                                <i class="fa-solid fa-play"></i> Watch
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            const mGrid = document.getElementById('materials-grid');
+            if (topicMats.length === 0) {
+                mGrid.innerHTML = '<div class="no-data" style="grid-column: 1/-1;">No reference materials seeded yet.</div>';
+            } else {
+                mGrid.innerHTML = topicMats.map(m => `
+                    <div class="resource-card">
+                        <span class="resource-badge material"><i class="fa-solid fa-file-invoice"></i> ${m.type}</span>
+                        <div class="resource-info">
+                            <h4>${m.title}</h4>
+                            <p class="resource-desc">${m.description}</p>
+                            <div class="resource-meta">
+                                <span><i class="fa-solid fa-tag"></i> ${m.subtopic}</span>
+                            </div>
+                        </div>
+                        <div class="resource-actions">
+                            <label class="progress-toggle">
+                                <input type="checkbox" ${m.completed ? 'checked' : ''} onchange="toggleResourceProgress('material', ${m.id}, this)">
+                                <span>Completed</span>
+                            </label>
+                            <a class="btn-download" href="${m.url}" target="_blank">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Note
+                            </a>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function toggleResourceProgress(type, id, checkbox) {
+            try {
+                const res = await fetchAuth('/api/resources/toggle', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        material_type: type,
+                        material_id: id,
+                        completed: checkbox.checked
+                    })
+                });
+                await res.json();
+                await loadStudyHub();
+            } catch (err) {
+                console.error("Error toggling progress:", err);
+            }
+        }
+
+        async function generateTopicQuickQuiz() {
+            try {
+                const reqData = {
+                    subject: activeResourceStream,
+                    topics: [activeResourceTopic],
+                    difficulties: [],
+                    types: [],
+                    status: "all",
+                    limit: 5
+                };
+                
+                const res = await fetchAuth('/api/exam/generate-custom', {
+                    method: 'POST',
+                    body: JSON.stringify(reqData)
+                });
+                
+                if (res.status === 404) {
+                    alert(`No questions found in the database for topic [${activeResourceTopic}]. Seed/digitise papers first!`);
+                    return;
+                }
+                
+                const questions = await res.json();
+                
+                activeTest = {
+                    subject: activeResourceStream,
+                    year: new Date().getFullYear(),
+                    session: `Practice: ${activeResourceTopic}`,
+                    questions: questions,
+                    responses: {},
+                    timeSpent: {},
+                    timeLeft: 15 * 60, 
+                    totalTimeLimit: 15 * 60,
+                    currentQuestionIndex: 0
+                };
+                
+                startTestTimer();
+                renderQuestionList();
+                showQuestion(0);
+                document.getElementById('portal-nav-bar').classList.add('hidden');
+                switchView('exam-view');
+                
+            } catch (err) {
+                console.error("Error generating quick quiz:", err);
+                alert("Failed to generate quick quiz. Please try again.");
+            }
+        }
+
+        function playVideo(videoId, videoTitle) {
+            document.getElementById('theater-video-title').textContent = videoTitle;
+            document.getElementById('theater-iframe').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+            document.getElementById('video-theater-overlay').classList.add('active');
+        }
+
+        function closeVideoTheater() {
+            document.getElementById('video-theater-overlay').classList.remove('active');
+            document.getElementById('theater-iframe').src = "";
+        }
+
+        // ============================================================
+        // Spaced Repetition Flashcards logic
+        // ============================================================
+        async function loadFlashcardsCenter() {
+            try {
+                const res = await fetchAuth(`/api/flashcards?subject=${activeResourceStream}`);
+                if (res.status === 401) return;
+                const allCards = await res.json();
+                
+                const topicsSet = new Set(allCards.map(c => c.topic));
+                const select = document.getElementById('flashcard-topic-select');
+                select.innerHTML = '<option value="">All Topics</option>' + 
+                    Array.from(topicsSet).sort().map(t => `<option value="${t}">${t}</option>`).join('');
+                
+                await loadFlashcards();
+            } catch (err) {
+                console.error("Error loading flashcards catalog:", err);
+            }
+        }
+
+        async function loadFlashcards() {
+            try {
+                const topic = document.getElementById('flashcard-topic-select').value;
+                let url = `/api/flashcards?subject=${activeResourceStream}`;
+                if (topic) url += `&topic=${encodeURIComponent(topic)}`;
+                
+                const res = await fetchAuth(url);
+                if (res.status === 401) return;
+                flashcardDeck = await res.json();
+                currentFlashcardIndex = 0;
+                
+                renderFlashcard();
+            } catch (err) {
+                console.error("Error loading flashcards:", err);
+            }
+        }
+
+        function renderFlashcard() {
+            const cardEl = document.getElementById('flashcard-card');
+            if (!cardEl) return;
+            
+            cardEl.classList.remove('flipped');
+            
+            if (flashcardDeck.length === 0) {
+                document.getElementById('flashcard-front-text').innerHTML = `No flashcards available for this topic.`;
+                document.getElementById('flashcard-back-text').innerHTML = ``;
+                document.getElementById('flashcard-topic-tag').textContent = 'N/A';
+                document.getElementById('flashcard-count-indicator').textContent = '0 cards';
+                return;
+            }
+            
+            const card = flashcardDeck[currentFlashcardIndex];
+            
+            document.getElementById('flashcard-front-text').innerHTML = card.front;
+            document.getElementById('flashcard-back-text').innerHTML = card.back;
+            document.getElementById('flashcard-topic-tag').textContent = card.topic;
+            document.getElementById('flashcard-topic-tag-back').textContent = card.topic;
+            
+            document.getElementById('flashcard-count-indicator').textContent = `Card ${currentFlashcardIndex + 1} of ${flashcardDeck.length}`;
+            
+            setTimeout(() => {
+                if (window.renderMathInElement) {
+                    renderMathInElement(cardEl, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false}
+                        ],
+                        throwOnError: false
+                    });
+                }
+            }, 50);
+        }
+
+        function flipFlashcard() {
+            const cardEl = document.getElementById('flashcard-card');
+            if (cardEl) cardEl.classList.toggle('flipped');
+        }
+
+        function nextFlashcard(known) {
+            if (flashcardDeck.length === 0) return;
+            
+            currentFlashcardIndex++;
+            if (currentFlashcardIndex >= flashcardDeck.length) {
+                currentFlashcardIndex = 0;
+                alert("You've reviewed all the cards in this deck! Cycling back.");
+            }
+            renderFlashcard();
+        }
+
+        // ============================================================
+        // Floating Pomodoro / Focus Timer logic
+        // ============================================================
+        function togglePomodoroMin() {
+            const widget = document.getElementById('pomodoro-widget');
+            if (widget) widget.classList.toggle('minimized');
+        }
+
+        function updatePomodoroDisplay() {
+            const mins = Math.floor(pomodoroTimeLeft / 60);
+            const secs = pomodoroTimeLeft % 60;
+            const timerEl = document.getElementById('pomodoro-timer');
+            if (timerEl) {
+                timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+        }
+
+        function startPomodoro() {
+            if (pomodoroIsRunning) return;
+            
+            pomodoroIsRunning = true;
+            document.getElementById('pomodoro-start-btn').style.display = 'none';
+            document.getElementById('pomodoro-pause-btn').style.display = 'inline-block';
+            
+            pomodoroTimerInterval = setInterval(() => {
+                if (pomodoroTimeLeft > 0) {
+                    pomodoroTimeLeft--;
+                    updatePomodoroDisplay();
+                    
+                    if ((25 * 60 - pomodoroTimeLeft) % 60 === 0) {
+                        pomoMinutesLoggedThisTurn++;
+                    }
+                } else {
+                    clearInterval(pomodoroTimerInterval);
+                    pomodoroIsRunning = false;
+                    
+                    alert("Focus session complete! Take a short break.");
+                    logPomodoroSession(25);
+                    
+                    resetPomodoro();
+                }
+            }, 1000);
+        }
+
+        function pausePomodoro() {
+            if (!pomodoroIsRunning) return;
+            
+            clearInterval(pomodoroTimerInterval);
+            pomodoroIsRunning = false;
+            document.getElementById('pomodoro-start-btn').style.display = 'inline-block';
+            document.getElementById('pomodoro-pause-btn').style.display = 'none';
+            
+            if (pomoMinutesLoggedThisTurn > 0) {
+                logPomodoroSession(pomoMinutesLoggedThisTurn);
+                pomoMinutesLoggedThisTurn = 0;
+            }
+        }
+
+        function resetPomodoro() {
+            clearInterval(pomodoroTimerInterval);
+            pomodoroIsRunning = false;
+            pomodoroTimeLeft = 25 * 60;
+            pomoMinutesLoggedThisTurn = 0;
+            updatePomodoroDisplay();
+            
+            document.getElementById('pomodoro-start-btn').style.display = 'inline-block';
+            document.getElementById('pomodoro-pause-btn').style.display = 'none';
+        }
+
+        function toggleAmbientNoise() {
+            const type = document.getElementById('pomo-ambient-select').value;
+            
+            if (ambientAudio) {
+                ambientAudio.pause();
+                ambientAudio = null;
+            }
+            
+            if (!type) return;
+            
+            let audioUrl = '';
+            if (type === 'white-noise') {
+                audioUrl = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3'; 
+            } else if (type === 'rain') {
+                audioUrl = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3';
+            } else if (type === 'lofi') {
+                audioUrl = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'; 
+            }
+            
+            ambientAudio = new Audio(audioUrl);
+            ambientAudio.loop = true;
+            ambientAudio.volume = 0.15;
+            ambientAudio.play().catch(err => console.error("Audio block:", err));
+        }
+
+        async function logPomodoroSession(minutes) {
+            try {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const res = await fetchAuth('/api/study/timer', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        date: todayStr,
+                        minutes: minutes
+                    })
+                });
+                await res.json();
+                
+                if (activePortalTab === 'dashboard') {
+                    await loadDashboardAnalytics();
+                }
+            } catch (err) {
+                console.error("Error logging focus minutes:", err);
+            }
+        }
     </script>
+
+    <!-- POMODORO TIMER FLOATING WIDGET -->
+    <div class="pomodoro-widget minimized" id="pomodoro-widget">
+        <!-- Minimized State Trigger -->
+        <div class="pomodoro-mini-trigger" onclick="togglePomodoroMin()"><i class="fa-solid fa-clock-rotate-left"></i></div>
+        
+        <!-- Full State -->
+        <div class="pomodoro-full">
+            <div class="pomodoro-header">
+                <h4><i class="fa-solid fa-brain"></i> Focus Session</h4>
+                <button class="pomodoro-close-btn" onclick="togglePomodoroMin()"><i class="fa-solid fa-chevron-down"></i></button>
+            </div>
+            
+            <div class="pomodoro-timer-display" id="pomodoro-timer">25:00</div>
+            
+            <div class="pomodoro-controls">
+                <button class="pomo-btn start" id="pomodoro-start-btn" onclick="startPomodoro()">Start</button>
+                <button class="pomo-btn pause" id="pomodoro-pause-btn" onclick="pausePomodoro()" style="display:none;">Pause</button>
+                <button class="pomo-btn reset" onclick="resetPomodoro()">Reset</button>
+            </div>
+            
+            <div style="margin-top: 8px;">
+                <select class="ambient-noise-select" id="pomo-ambient-select" onchange="toggleAmbientNoise()">
+                    <option value="">No Ambient Sound</option>
+                    <option value="white-noise">White Noise</option>
+                    <option value="rain">Relaxing Rain</option>
+                    <option value="lofi">Lofi Focus Beats</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Theater Overlay -->
+    <div class="video-theater-overlay" id="video-theater-overlay">
+        <div class="theater-content">
+            <div class="theater-header">
+                <h3 id="theater-video-title">Video Lecture</h3>
+                <button class="close-theater-btn" onclick="closeVideoTheater()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="youtube-iframe-container">
+                <iframe id="theater-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -3,389 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GATE PYQ Digitizer & Cost Control Center</title>
+    <title>GATE LeetPractice - One-Stop Preparation SaaS for CS & DA</title>
     
-    <!-- Google Fonts: Outfit -->
+    <!-- Google Fonts: Outfit & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- KaTeX CSS & JS for LaTeX Rendering -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/index.css">
+    <link rel="stylesheet" href="/static/landing.css">
 </head>
-<body>
+<body class="glass-theme">
+    <!-- Background decorations -->
     <div class="background-decor">
         <div class="circle circle-1"></div>
         <div class="circle circle-2"></div>
+        <div class="circle circle-3"></div>
     </div>
 
-    <div class="container">
-        <!-- Header -->
-        <header>
-            <div class="logo-area">
-                <span class="gate-badge">GATE</span>
-                <h1>CS & DA Question Bank Parser</h1>
+    <!-- Navigation Bar -->
+    <header class="landing-header">
+        <div class="logo-area">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>GATE <span class="accent">LeetPractice</span></span>
+        </div>
+        <nav class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#preview">SaaS Preview</a>
+            <a href="/exam" class="dashboard-link">Candidate Workspace</a>
+            <a href="/digitizer" class="admin-link"><i class="fa-solid fa-screwdriver-wrench"></i> Cost Control Parser</a>
+        </nav>
+        <div class="header-actions">
+            <a href="/static/login.html" class="btn btn-primary" id="nav-cta-btn">Sign In / Sign Up</a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="badge-dot"></span>
+                <span>Verified Quality study materials & 100% preparation help</span>
             </div>
-            <div class="api-status">
-                <span class="status-indicator" id="status-indicator"></span>
-                <span id="status-text">Loading...</span>
+            <h1>The One-Stop Destination for <span class="gradient-text">GATE CS & DA</span> Aspirants</h1>
+            <p class="hero-subtitle">
+                Access standard textbooks, NPTEL and YouTube lectures, realistic CBT mock test simulators, 3D spaced-repetition flashcards, and AI-driven performance diagnostics. Everything you need to crack GATE, fully integrated into a single platform.
+            </p>
+            <div class="hero-actions">
+                <a href="/static/login.html" class="btn btn-primary btn-large" id="hero-main-cta">Start Free Preparation</a>
+                <a href="/digitizer" class="btn btn-secondary btn-large"><i class="fa-solid fa-cube"></i> Collaborate & Digitise</a>
             </div>
-        </header>
+        </div>
+    </section>
 
-        <!-- Main Dashboard Grid -->
-        <main class="dashboard-grid">
-            
-            <!-- Left Side: Controls & Logs -->
-            <div class="column-left">
-                <!-- Cost Control & Budget Slider Card -->
-                <div class="card card-control">
-                    <h2>Cost Control Center</h2>
-                    <p class="subtitle">Set your safety budget to prevent unexpected API costs.</p>
-                    
-                    <div class="slider-group">
-                        <div class="slider-header">
-                            <span class="label">Safety Budget Limit</span>
-                            <span class="value" id="budget-val">$1.00 USD</span>
-                        </div>
-                        <input type="range" id="budget-slider" min="0.10" max="5.00" step="0.05" value="1.00">
-                        <div class="slider-markers">
-                            <span>$0.10</span>
-                            <span>$1.00</span>
-                            <span>$2.50</span>
-                            <span>$5.00</span>
-                        </div>
-                    </div>
+    <!-- Core Features Grid -->
+    <section class="features-section" id="features">
+        <div class="section-title">
+            <h2>Complete Preparation Suite</h2>
+            <p>Every resource, tool, and study log mapped directly to the official GATE CS and DA syllabi.</p>
+        </div>
 
-                    <div class="control-actions">
-                        <button id="btn-start" class="btn btn-primary">Start Parser</button>
-                        <button id="btn-pause" class="btn btn-secondary" disabled>Pause</button>
-                        <button id="btn-reset" class="btn btn-danger">Reset State</button>
-                    </div>
+        <div class="features-grid">
+            <!-- Feature 1: CBT Simulator -->
+            <div class="feature-card">
+                <div class="feature-icon bg-blue">
+                    <i class="fa-solid fa-desktop"></i>
                 </div>
-
-                <!-- Live Statistics Card -->
-                <div class="card card-stats">
-                    <h2>Execution Metrics</h2>
-                    <div class="stats-grid">
-                        <div class="stat-box">
-                            <span class="label">Running Cost</span>
-                            <span class="number" id="stat-cost">$0.000</span>
-                        </div>
-                        <div class="stat-box">
-                            <span class="label">Pages Parsed</span>
-                            <span class="number" id="stat-pages">0 / 0</span>
-                        </div>
-                        <div class="stat-box">
-                            <span class="label">Questions Extracted</span>
-                            <span class="number" id="stat-questions">0</span>
-                        </div>
-                        <div class="stat-box">
-                            <span class="label">Diagrams Cropped</span>
-                            <span class="number" id="stat-diagrams">0</span>
-                        </div>
-                    </div>
-
-                    <!-- Cost Progress Bar -->
-                    <div class="progress-container">
-                        <div class="progress-labels">
-                            <span>Budget Exhaustion</span>
-                            <span id="cost-progress-percent">0%</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill cost-fill" id="cost-progress-fill"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Pages Progress Bar -->
-                    <div class="progress-container">
-                        <div class="progress-labels">
-                            <span>Total Extraction Progress</span>
-                            <span id="page-progress-percent">0%</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill page-fill" id="page-progress-fill"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Live Terminal Logs Card -->
-                <div class="card card-logs">
-                    <h2>Live Terminal Logs</h2>
-                    <div class="terminal-log" id="terminal-log">
-                        <div class="log-line system">[SYSTEM] Dashboard initialised. Ready to run.</div>
-                    </div>
-                </div>
+                <h3>CBT Mock Simulator</h3>
+                <p>Simulate standard GATE exams with a realistic TCS iON interface. Practice with authentic navigation panels, calculators, virtual keypads, and timer bounds.</p>
             </div>
 
-            <!-- Right Side: Live Question Bank Preview -->
-            <div class="column-right">
-                <div class="card card-preview">
-                    <div class="preview-header">
-                        <h2>Extracted Question Bank</h2>
-                        <span class="badge" id="preview-count">0 Questions</span>
+            <!-- Feature 2: LeetCode Practice -->
+            <div class="feature-card">
+                <div class="feature-icon bg-purple">
+                    <i class="fa-solid fa-code"></i>
+                </div>
+                <h3>LeetCode-Style Directory</h3>
+                <p>Browse previous-year questions grouped by topic, difficulty (Easy, Medium, Hard), and status. Practice individual questions with real-time correct-answer checks.</p>
+            </div>
+
+            <!-- Feature 3: Embedded Study Hub -->
+            <div class="feature-card">
+                <div class="feature-icon bg-teal">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                <h3>Embedded Theatre & Textbooks</h3>
+                <p>Access high-quality textbooks (CLRS, Galvin, Strang) and watch NPTEL/YouTube lectures inside a custom overlay theatre to prevent distracting recommendations.</p>
+            </div>
+
+            <!-- Feature 4: Spaced Flashcards -->
+            <div class="feature-card">
+                <div class="feature-icon bg-pink">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <h3>3D Formula Flashcards</h3>
+                <p>Memorize critical mathematical theorems, complexity bounds, and database formulas using interactive 3D flipping flashcards powered by spaced repetition.</p>
+            </div>
+
+            <!-- Feature 5: AI Performance Review -->
+            <div class="feature-card">
+                <div class="feature-icon bg-red">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <h3>AI Weak-Area Diagnostics</h3>
+                <p>Receive automated weakness diagnostics that analyze your solve logs. Get recommended videos and notes for topics falling below standard accuracy bounds.</p>
+            </div>
+
+            <!-- Feature 6: Focus Pomodoro Logger -->
+            <div class="feature-card">
+                <div class="feature-icon bg-orange">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <h3>Focus Time Tracker</h3>
+                <p>Log your study sessions using a floating Pomodoro timer with lofi, rain, and white noise tracks, creating study streaks on your analytics board.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Preview / Mockup Section -->
+    <section class="preview-section" id="preview">
+        <div class="preview-card">
+            <div class="preview-header">
+                <div class="preview-window-dots">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                </div>
+                <div class="preview-window-title">GATE LeetPractice Integrated Analytics Preview</div>
+            </div>
+            <div class="preview-body">
+                <div class="mock-dashboard-grid">
+                    <!-- Column 1: AI Diagnostics -->
+                    <div class="mock-card">
+                        <h3><i class="fa-solid fa-triangle-exclamation" style="color:#ff5c75;"></i> AI Performance Review & Weak Areas</h3>
+                        <div class="mock-weakness-item">
+                            <div class="mock-weakness-meta">
+                                <strong>Algorithms (CS)</strong>
+                                <span class="accuracy-badge red">Accuracy: 48.5%</span>
+                            </div>
+                            <div class="mock-weakness-links">
+                                <span class="mock-badge"><i class="fa-brands fa-youtube"></i> Watch: Dynamic Programming</span>
+                                <span class="mock-badge"><i class="fa-solid fa-file-pdf"></i> Read: CLRS Chapter 15</span>
+                            </div>
+                        </div>
+                        <div class="mock-weakness-item">
+                            <div class="mock-weakness-meta">
+                                <strong>Probability and Statistics (DA)</strong>
+                                <span class="accuracy-badge orange">Accuracy: 58.0%</span>
+                            </div>
+                            <div class="mock-weakness-links">
+                                <span class="mock-badge"><i class="fa-brands fa-youtube"></i> Watch: Bayes' Theorem Harvard</span>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="question-list" id="question-list">
-                        <!-- Questions will be injected dynamically here -->
-                        <div class="no-data">
-                            <p>No questions parsed yet. Start the parser to populate the question bank.</p>
+
+                    <!-- Column 2: Focus Heatmap -->
+                    <div class="mock-card">
+                        <h3><i class="fa-solid fa-calendar-days"></i> Study Activity (Heatmap)</h3>
+                        <p class="mock-subtitle">Focused study minutes tracked over the past 14 days.</p>
+                        <div class="mock-heatmap-grid">
+                            <div class="mock-cell lvl-3">50</div>
+                            <div class="mock-cell lvl-2">25</div>
+                            <div class="mock-cell lvl-0"></div>
+                            <div class="mock-cell lvl-1">10</div>
+                            <div class="mock-cell lvl-3">75</div>
+                            <div class="mock-cell lvl-2">30</div>
+                            <div class="mock-cell lvl-3">60</div>
+                            <div class="mock-cell lvl-0"></div>
+                            <div class="mock-cell lvl-1">15</div>
+                            <div class="mock-cell lvl-2">25</div>
+                            <div class="mock-cell lvl-2">20</div>
+                            <div class="mock-cell lvl-3">90</div>
+                            <div class="mock-cell lvl-2">30</div>
+                            <div class="mock-cell lvl-1">10</div>
+                        </div>
+                        <div class="mock-heatmap-legends">
+                            <span>Less</span>
+                            <span class="lvl-box lvl-0"></span>
+                            <span class="lvl-box lvl-1"></span>
+                            <span class="lvl-box lvl-2"></span>
+                            <span class="lvl-box lvl-3"></span>
+                            <span>More</span>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
 
-        </main>
-    </div>
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>GATE LeetPractice</span>
+            </div>
+            <p>The premium, cost-controlled, one-stop preparation SaaS portal for Computer Science & Data Science candidates.</p>
+            <div class="footer-copy">&copy; 2026 GATE LeetPractice. Built for verified excellence.</div>
+        </div>
+    </footer>
 
-    <!-- Script for Live Operations -->
+    <!-- Dynamic CTA & State logic -->
     <script>
-        // DOM Elements
-        const budgetSlider = document.getElementById('budget-slider');
-        const budgetVal = document.getElementById('budget-val');
-        const btnStart = document.getElementById('btn-start');
-        const btnPause = document.getElementById('btn-pause');
-        const btnReset = document.getElementById('btn-reset');
-        
-        const statCost = document.getElementById('stat-cost');
-        const statPages = document.getElementById('stat-pages');
-        const statQuestions = document.getElementById('stat-questions');
-        const statDiagrams = document.getElementById('stat-diagrams');
-        
-        const costProgressFill = document.getElementById('cost-progress-fill');
-        const costProgressPercent = document.getElementById('cost-progress-percent');
-        const pageProgressFill = document.getElementById('page-progress-fill');
-        const pageProgressPercent = document.getElementById('page-progress-percent');
-        
-        const statusIndicator = document.getElementById('status-indicator');
-        const statusText = document.getElementById('status-text');
-        const terminalLog = document.getElementById('terminal-log');
-        const questionList = document.getElementById('question-list');
-        const previewCount = document.getElementById('preview-count');
-
-        let parserState = {
-            status: "idle",
-            running_cost: 0,
-            processed_pages: 0,
-            total_pages: 0,
-            budget_limit: 1.00,
-            extracted_count: 0,
-            diagrams_count: 0
-        };
-
-        // Render LaTeX equations in questions
-        function renderMath() {
-            if (window.renderMathInElement) {
-                renderMathInElement(questionList, {
-                    delimiters: [
-                        {left: '$$', right: '$$', display: true},
-                        {left: '$', right: '$', display: false},
-                        {left: '\\(', right: '\\)', display: false},
-                        {left: '\\[', right: '\\]', display: true}
-                    ],
-                    throwOnError: false
-                });
-            }
-        }
-
-        // Add line to terminal log
-        function addLogLine(msg, type = "info") {
-            const line = document.createElement('div');
-            line.className = `log-line ${type}`;
-            const time = new Date().toLocaleTimeString();
-            line.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-msg">${msg}</span>`;
-            terminalLog.appendChild(line);
-            terminalLog.scrollTop = terminalLog.scrollHeight;
-        }
-
-        // Update UI from state
-        function updateUI(state, logs = []) {
-            parserState = state;
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
             
-            // Stats
-            statCost.innerText = `$${state.running_cost.toFixed(3)}`;
-            statPages.innerText = `${state.processed_pages} / ${state.total_pages}`;
-            statQuestions.innerText = state.extracted_count;
-            statDiagrams.innerText = state.diagrams_count;
-            previewCount.innerText = `${state.extracted_count} Questions`;
+            const navCta = document.getElementById('nav-cta-btn');
+            const heroCta = document.getElementById('hero-main-cta');
             
-            // Cost progress
-            const costPct = Math.min((state.running_cost / state.budget_limit) * 100, 100);
-            costProgressFill.style.width = `${costPct}%`;
-            costProgressPercent.innerText = `${costPct.toFixed(0)}%`;
-            if (costPct >= 90) {
-                costProgressFill.style.background = "var(--danger)";
-            } else if (costPct >= 75) {
-                costProgressFill.style.background = "var(--warning)";
-            } else {
-                costProgressFill.style.background = "var(--accent-gradient)";
-            }
-
-            // Total progress
-            const pagePct = state.total_pages > 0 ? (state.processed_pages / state.total_pages) * 100 : 0;
-            pageProgressFill.style.width = `${pagePct}%`;
-            pageProgressPercent.innerText = `${pagePct.toFixed(0)}%`;
-
-            // Status bar
-            statusText.innerText = state.status.toUpperCase();
-            statusIndicator.className = `status-indicator ${state.status}`;
-
-            // Buttons
-            if (state.status === "running") {
-                btnStart.disabled = true;
-                btnPause.disabled = false;
-            } else {
-                btnStart.disabled = false;
-                btnPause.disabled = true;
-            }
-
-            // Logs
-            if (logs && logs.length > 0) {
-                logs.forEach(log => {
-                    addLogLine(log.message, log.level);
-                });
-            }
-        }
-
-        // Fetch current status
-        async function fetchStatus() {
-            try {
-                const res = await fetch('/api/status');
-                const data = await res.json();
-                updateUI(data.state, data.new_logs);
+            if (token) {
+                // If logged in, update CTA buttons to redirect directly to dashboard
+                navCta.textContent = 'Go to Workspace';
+                navCta.href = '/exam';
+                navCta.className = 'btn btn-secondary';
                 
-                if (data.new_questions && data.new_questions.length > 0) {
-                    injectQuestions(data.all_questions);
-                }
-            } catch (err) {
-                console.error("Error fetching state:", err);
-            }
-        }
-
-        // Inject questions into list view
-        function injectQuestions(questions) {
-            if (!questions || questions.length === 0) {
-                questionList.innerHTML = `<div class="no-data"><p>No questions parsed yet. Start the parser to populate the question bank.</p></div>`;
-                return;
-            }
-
-            questionList.innerHTML = "";
-            questions.forEach(q => {
-                const item = document.createElement('div');
-                item.className = "question-item";
-                
-                let optionsHtml = "";
-                if (q.options && q.options.length > 0) {
-                    optionsHtml = `<ul class="question-options">`;
-                    q.options.forEach(opt => {
-                        optionsHtml += `<li>${opt}</li>`;
-                    });
-                    optionsHtml += `</ul>`;
-                }
-
-                let diagramHtml = "";
-                if (q.diagram_path) {
-                    diagramHtml = `<div class="question-diagram-container">
-                        <img src="/assets/${q.diagram_path.split('/').pop()}" alt="Diagram for Question ${q.question_number}" class="question-diagram">
-                    </div>`;
-                }
-
-                item.innerHTML = `
-                    <div class="q-meta">
-                        <span class="q-num">Q. ${q.question_number}</span>
-                        <span class="q-badge">${q.subject} ${q.year}</span>
-                        <span class="q-type">${q.type}</span>
-                        <span class="q-marks">${q.marks} Mark${q.marks > 1 ? 's' : ''}</span>
-                    </div>
-                    <div class="q-body">
-                        ${q.question_text}
-                    </div>
-                    ${diagramHtml}
-                    ${optionsHtml}
-                `;
-                questionList.appendChild(item);
-            });
-            renderMath();
-        }
-
-        // Budget slider interaction
-        budgetSlider.addEventListener('input', async (e) => {
-            const val = parseFloat(e.target.value);
-            budgetVal.innerText = `$${val.toFixed(2)} USD`;
-            
-            try {
-                const res = await fetch('/api/limit', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({limit: val})
-                });
-                const data = await res.json();
-                addLogLine(`Cost limit adjusted to $${val.toFixed(2)} USD`, "system");
-            } catch (err) {
-                console.error("Error setting limit:", err);
-            }
-        });
-
-        // Button clicks
-        btnStart.addEventListener('click', async () => {
-            addLogLine("Sending start instruction...", "system");
-            try {
-                const res = await fetch('/api/start', {method: 'POST'});
-                const data = await res.json();
-                addLogLine("Parser worker started.", "system");
-                fetchStatus();
-            } catch (err) {
-                addLogLine(`Start failed: ${err.message}`, "danger");
-            }
-        });
-
-        btnPause.addEventListener('click', async () => {
-            addLogLine("Sending pause instruction...", "system");
-            try {
-                const res = await fetch('/api/pause', {method: 'POST'});
-                const data = await res.json();
-                addLogLine("Parser worker paused.", "system");
-                fetchStatus();
-            } catch (err) {
-                addLogLine(`Pause failed: ${err.message}`, "danger");
-            }
-        });
-
-        btnReset.addEventListener('click', async () => {
-            if (confirm("Are you sure you want to reset all parsed questions and state? This deletes the digital question bank.")) {
-                addLogLine("Sending reset instruction...", "system");
-                try {
-                    const res = await fetch('/api/reset', {method: 'POST'});
-                    const data = await res.json();
-                    addLogLine("Parser state and JSON bank fully reset.", "system");
-                    questionList.innerHTML = `<div class="no-data"><p>No questions parsed yet. Start the parser to populate the question bank.</p></div>`;
-                    fetchStatus();
-                } catch (err) {
-                    addLogLine(`Reset failed: ${err.message}`, "danger");
-                }
-            }
-        });
-
-        // Initialize status polling
-        setInterval(fetchStatus, 1500);
-        
-        // Initial fetch on load
-        window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                // Fetch initial budget to match slider
-                const res = await fetch('/api/status');
-                const data = await res.json();
-                budgetSlider.value = data.state.budget_limit;
-                budgetVal.innerText = `$${data.state.budget_limit.toFixed(2)} USD`;
-                injectQuestions(data.all_questions);
-                updateUI(data.state, data.new_logs);
-                addLogLine("Dashboard synced with server.", "system");
-            } catch (err) {
-                addLogLine("Server sync failed. Make sure the backend is running.", "danger");
+                heroCta.innerHTML = '<i class="fa-solid fa-chart-line"></i> Open Candidate Dashboard';
+                heroCta.href = '/exam';
             }
         });
     </script>

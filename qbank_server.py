@@ -22,7 +22,7 @@ import google.generativeai as genai
 import datetime
 import jwt
 from passlib.context import CryptContext
-from database import SessionLocal, User, Question, Attempt, Response as DbResponse, SoloResponse, seed_questions
+from database import SessionLocal, User, Question, Attempt, Response as DbResponse, SoloResponse, seed_questions, StudyMaterial, VideoMaterial, UserProgress, Flashcard, StudyLog, CuratedSet
 from sqlalchemy.orm import Session
 
 # Load environment variables
@@ -580,6 +580,10 @@ app.mount("/assets", StaticFiles(directory="GATE_PYQs/assets"), name="assets")
 def read_root():
     return FileResponse("static/index.html")
 
+@app.get("/digitizer")
+def read_digitizer():
+    return FileResponse("static/digitizer.html")
+
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
     return Response(status_code=204)
@@ -697,6 +701,15 @@ class ExamSubmission(BaseModel):
     session: str
     total_time: int
     responses: list[QuestionResponse]
+
+class CustomTestRequest(BaseModel):
+    subject: str
+    topics: list[str] = []
+    difficulties: list[str] = []
+    types: list[str] = []
+    status: str = "all"  # "all", "unattempted", "incorrect", "solved"
+    limit: int = 10
+
 
 def parse_nat_correct_range(correct_str: str) -> Optional[tuple[float, float]]:
     correct_str = correct_str.strip().lower()
@@ -830,7 +843,8 @@ def get_paper(subject: str, year: int, session: str, db: Session = Depends(get_d
             "marks": q.marks,
             "question_text": q.question_text,
             "options": options,
-            "diagram_path": q.diagram_path
+            "diagram_path": q.diagram_path,
+            "diagram_base64": q.diagram_base64 or ""
         })
     return result
 
@@ -1093,7 +1107,8 @@ def get_question_detail(id: str, user_id: int = Depends(get_current_user_id), db
         "marks": q.marks,
         "question_text": q.question_text,
         "options": options,
-        "diagram_path": q.diagram_path
+        "diagram_path": q.diagram_path,
+        "diagram_base64": q.diagram_base64 or ""
     }
 
 @app.post("/api/questions/{id}/solve")
@@ -1196,10 +1211,371 @@ def get_user_analytics(user_id: int = Depends(get_current_user_id), db: Session 
         "performance_trend": attempts_history
     }
 
+def get_custom_test_query(data: CustomTestRequest, user_id: int, db: Session):
+    from sqlalchemy import or_
+    query = db.query(Question).filter(Question.subject == data.subject)
+    
+    if data.topics:
+        query = query.filter(Question.topic.in_(data.topics))
+        
+    if data.difficulties:
+        query = query.filter(Question.difficulty.in_(data.difficulties))
+        
+    if data.types:
+        query = query.filter(Question.type.in_(data.types))
+        
+    if data.status != "all":
+        # Solved subqueries
+        solved_solo_query = db.query(SoloResponse.question_id).filter(
+            SoloResponse.user_id == user_id, SoloResponse.is_correct == True
+        )
+        solved_exam_query = db.query(DbResponse.question_id).join(Attempt).filter(
+            Attempt.user_id == user_id, DbResponse.is_correct == True
+        )
+        
+        # Attempted subqueries
+        attempted_solo_query = db.query(SoloResponse.question_id).filter(
+            SoloResponse.user_id == user_id
+        )
+        attempted_exam_query = db.query(DbResponse.question_id).join(Attempt).filter(
+            Attempt.user_id == user_id
+        )
+        
+        if data.status == "solved":
+            query = query.filter(
+                or_(
+                    Question.id.in_(solved_solo_query),
+                    Question.id.in_(solved_exam_query)
+                )
+            )
+        elif data.status == "attempted":
+            query = query.filter(
+                or_(
+                    Question.id.in_(attempted_solo_query),
+                    Question.id.in_(attempted_exam_query)
+                )
+            )
+        elif data.status == "unattempted":
+            query = query.filter(
+                ~Question.id.in_(attempted_solo_query),
+                ~Question.id.in_(attempted_exam_query)
+            )
+        elif data.status == "incorrect":
+            query = query.filter(
+                or_(
+                    Question.id.in_(attempted_solo_query),
+                    Question.id.in_(attempted_exam_query)
+                ),
+                ~Question.id.in_(solved_solo_query),
+                ~Question.id.in_(solved_exam_query)
+            )
+            
+    return query
+
+@app.post("/api/exam/custom-count")
+def get_custom_test_count(data: CustomTestRequest, user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    query = get_custom_test_query(data, user_id, db)
+    count = query.count()
+    return {"count": count}
+
+@app.post("/api/exam/generate-custom")
+def generate_custom_test(data: CustomTestRequest, user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    query = get_custom_test_query(data, user_id, db)
+    questions = query.all()
+    if not questions:
+        raise HTTPException(status_code=404, detail="No questions found matching criteria")
+        
+    import random
+    random.shuffle(questions)
+    selected = questions[:data.limit]
+    
+    result = []
+    for q in selected:
+        options = []
+        if q.options_json:
+            try:
+                options = json.loads(q.options_json)
+            except Exception:
+                pass
+        result.append({
+            "id": q.id,
+            "subject": q.subject,
+            "topic": q.topic,
+            "difficulty": q.difficulty,
+            "year": q.year,
+            "session": q.session,
+            "question_number": q.question_number,
+            "type": q.type,
+            "marks": q.marks,
+            "question_text": q.question_text,
+            "options": options,
+            "diagram_path": q.diagram_path,
+            "diagram_base64": q.diagram_base64 or ""
+        })
+    return result
+
+class ToggleProgressRequest(BaseModel):
+    material_type: str # "video" or "material"
+    material_id: int
+    completed: bool
+
+class StudyLogRequest(BaseModel):
+    date: str # YYYY-MM-DD
+    minutes: int
+
+@app.get("/api/resources")
+def get_resources(subject: Optional[str] = None, user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    mat_query = db.query(StudyMaterial)
+    vid_query = db.query(VideoMaterial)
+    if subject:
+        mat_query = mat_query.filter(StudyMaterial.subject == subject)
+        vid_query = vid_query.filter(VideoMaterial.subject == subject)
+    
+    materials = mat_query.all()
+    videos = vid_query.all()
+    
+    progress_records = db.query(UserProgress).filter(UserProgress.user_id == user_id).all()
+    completed_videos = {p.material_id for p in progress_records if p.material_type == "video" and p.completed}
+    completed_materials = {p.material_id for p in progress_records if p.material_type == "material" and p.completed}
+    
+    return {
+        "materials": [
+            {
+                "id": m.id,
+                "subject": m.subject,
+                "topic": m.topic,
+                "subtopic": m.subtopic,
+                "title": m.title,
+                "url": m.url,
+                "type": m.type,
+                "description": m.description,
+                "is_verified": m.is_verified,
+                "completed": m.id in completed_materials
+            } for m in materials
+        ],
+        "videos": [
+            {
+                "id": v.id,
+                "subject": v.subject,
+                "topic": v.topic,
+                "subtopic": v.subtopic,
+                "title": v.title,
+                "youtube_url": v.youtube_url,
+                "video_id": v.video_id,
+                "duration_mins": v.duration_mins,
+                "channel_name": v.channel_name,
+                "description": v.description,
+                "completed": v.id in completed_videos
+            } for v in videos
+        ]
+    }
+
+@app.post("/api/resources/toggle")
+def toggle_progress(data: ToggleProgressRequest, user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    record = db.query(UserProgress).filter(
+        UserProgress.user_id == user_id,
+        UserProgress.material_type == data.material_type,
+        UserProgress.material_id == data.material_id
+    ).first()
+    
+    if record:
+        record.completed = data.completed
+        record.timestamp = datetime.datetime.utcnow()
+    else:
+        record = UserProgress(
+            user_id=user_id,
+            material_type=data.material_type,
+            material_id=data.material_id,
+            completed=data.completed
+        )
+        db.add(record)
+        
+    db.commit()
+    return {"status": "success", "completed": data.completed}
+
+@app.post("/api/study/timer")
+def log_study_time(data: StudyLogRequest, user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    record = db.query(StudyLog).filter(
+        StudyLog.user_id == user_id,
+        StudyLog.date == data.date
+    ).first()
+    
+    if record:
+        record.minutes_spent += data.minutes
+    else:
+        record = StudyLog(
+            user_id=user_id,
+            date=data.date,
+            minutes_spent=data.minutes
+        )
+        db.add(record)
+        
+    db.commit()
+    return {"status": "success", "total_minutes": record.minutes_spent}
+
+@app.get("/api/flashcards")
+def get_flashcards(subject: Optional[str] = None, topic: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(Flashcard)
+    if subject:
+        query = query.filter(Flashcard.subject == subject)
+    if topic:
+        query = query.filter(Flashcard.topic == topic)
+    
+    flashcards = query.all()
+    return [
+        {
+            "id": f.id,
+            "subject": f.subject,
+            "topic": f.topic,
+            "front": f.front,
+            "back": f.back
+        } for f in flashcards
+    ]
+
+@app.get("/api/curated-sets")
+def get_curated_sets(subject: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(CuratedSet)
+    if subject:
+        query = query.filter(CuratedSet.subject == subject)
+    sets = query.all()
+    return [
+        {
+            "id": c.id,
+            "name": c.name,
+            "description": c.description,
+            "subject": c.subject,
+            "questions_count": len([qid for qid in c.questions_csv.split(",") if qid])
+        } for c in sets
+    ]
+
+@app.get("/api/curated-sets/{id}/questions")
+def get_curated_set_questions(id: int, db: Session = Depends(get_db)):
+    cur_set = db.query(CuratedSet).filter(CuratedSet.id == id).first()
+    if not cur_set:
+        raise HTTPException(status_code=404, detail="Curated set not found")
+        
+    qid_list = [qid.strip() for qid in cur_set.questions_csv.split(",") if qid.strip()]
+    questions = db.query(Question).filter(Question.id.in_(qid_list)).all()
+    
+    q_map = {q.id: q for q in questions}
+    
+    result = []
+    for qid in qid_list:
+        q = q_map.get(qid)
+        if not q:
+            continue
+        options = []
+        if q.options_json:
+            try:
+                options = json.loads(q.options_json)
+            except Exception:
+                pass
+        result.append({
+            "id": q.id,
+            "subject": q.subject,
+            "topic": q.topic,
+            "difficulty": q.difficulty,
+            "year": q.year,
+            "session": q.session,
+            "question_number": q.question_number,
+            "type": q.type,
+            "marks": q.marks,
+            "question_text": q.question_text,
+            "options": options,
+            "diagram_path": q.diagram_path,
+            "diagram_base64": q.diagram_base64 or ""
+        })
+    return result
+
+@app.get("/api/analytics/weak-areas")
+def get_weak_areas(user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    exam_responses = db.query(DbResponse.is_correct, Question.topic, Question.subject).join(Question).join(Attempt).filter(Attempt.user_id == user_id).all()
+    solo_responses = db.query(SoloResponse.is_correct, Question.topic, Question.subject).join(Question).filter(SoloResponse.user_id == user_id).all()
+    
+    all_resps = exam_responses + solo_responses
+    
+    topic_stats = {}
+    for is_correct, topic, subject in all_resps:
+        if topic not in topic_stats:
+            topic_stats[topic] = {"correct": 0, "total": 0, "subject": subject}
+        topic_stats[topic]["total"] += 1
+        if is_correct:
+            topic_stats[topic]["correct"] += 1
+            
+    weak_topics = []
+    for topic, stats in topic_stats.items():
+        accuracy = (stats["correct"] / stats["total"]) * 100
+        if stats["total"] >= 1 and accuracy < 70.0:
+            weak_topics.append({
+                "topic": topic,
+                "accuracy": round(accuracy, 1),
+                "total_attempted": stats["total"],
+                "subject": stats["subject"]
+            })
+            
+    weak_topics.sort(key=lambda x: x["accuracy"])
+    
+    recommendations = []
+    for item in weak_topics[:3]:
+        topic = item["topic"]
+        sub = item["subject"]
+        
+        video = db.query(VideoMaterial).filter(
+            VideoMaterial.subject == sub,
+            VideoMaterial.topic == topic
+        ).first()
+        
+        material = db.query(StudyMaterial).filter(
+            StudyMaterial.subject == sub,
+            StudyMaterial.topic == topic
+        ).first()
+        
+        recs = []
+        if video:
+            recs.append({
+                "type": "video",
+                "title": video.title,
+                "youtube_url": video.youtube_url,
+                "video_id": video.video_id,
+                "channel": video.channel_name
+            })
+        if material:
+            recs.append({
+                "type": "material",
+                "title": material.title,
+                "url": material.url,
+                "material_type": material.type
+            })
+            
+        recommendations.append({
+            "topic": topic,
+            "accuracy": item["accuracy"],
+            "recs": recs
+        })
+        
+    import datetime as dt
+    today = dt.date.today()
+    dates_list = [(today - dt.timedelta(days=i)).strftime("%Y-%m-%d") for i in range(14)]
+    logs = db.query(StudyLog).filter(
+        StudyLog.user_id == user_id,
+        StudyLog.date.in_(dates_list)
+    ).all()
+    
+    logs_map = {l.date: l.minutes_spent for l in logs}
+    heatmap = [{"date": d, "minutes": logs_map.get(d, 0)} for d in dates_list]
+    heatmap.reverse()
+    
+    return {
+        "weak_topics": weak_topics,
+        "recommendations": recommendations,
+        "heatmap": heatmap
+    }
+
 @app.post("/api/exam/sync-db")
 def sync_db(user_id: int = Depends(get_current_user_id)):
     seed_questions()
     return {"status": "success", "message": "Database sync triggered successfully"}
+
 
 @app.on_event("startup")
 def startup_event():

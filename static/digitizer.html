@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GATE PYQ Digitizer & Cost Control Center</title>
+    
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- KaTeX CSS & JS for LaTeX Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/digitizer.css">
+</head>
+<body>
+    <div class="background-decor">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo-area">
+                <span class="gate-badge">GATE</span>
+                <h1>CS & DA Question Bank Parser</h1>
+            </div>
+            <div class="api-status">
+                <span class="status-indicator" id="status-indicator"></span>
+                <span id="status-text">Loading...</span>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Grid -->
+        <main class="dashboard-grid">
+            
+            <!-- Left Side: Controls & Logs -->
+            <div class="column-left">
+                <!-- Cost Control & Budget Slider Card -->
+                <div class="card card-control">
+                    <h2>Cost Control Center</h2>
+                    <p class="subtitle">Set your safety budget to prevent unexpected API costs.</p>
+                    
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="label">Safety Budget Limit</span>
+                            <span class="value" id="budget-val">$1.00 USD</span>
+                        </div>
+                        <input type="range" id="budget-slider" min="0.10" max="5.00" step="0.05" value="1.00">
+                        <div class="slider-markers">
+                            <span>$0.10</span>
+                            <span>$1.00</span>
+                            <span>$2.50</span>
+                            <span>$5.00</span>
+                        </div>
+                    </div>
+
+                    <div class="control-actions">
+                        <button id="btn-start" class="btn btn-primary">Start Parser</button>
+                        <button id="btn-pause" class="btn btn-secondary" disabled>Pause</button>
+                        <button id="btn-reset" class="btn btn-danger">Reset State</button>
+                    </div>
+                </div>
+
+                <!-- Live Statistics Card -->
+                <div class="card card-stats">
+                    <h2>Execution Metrics</h2>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <span class="label">Running Cost</span>
+                            <span class="number" id="stat-cost">$0.000</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="label">Pages Parsed</span>
+                            <span class="number" id="stat-pages">0 / 0</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="label">Questions Extracted</span>
+                            <span class="number" id="stat-questions">0</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="label">Diagrams Cropped</span>
+                            <span class="number" id="stat-diagrams">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Cost Progress Bar -->
+                    <div class="progress-container">
+                        <div class="progress-labels">
+                            <span>Budget Exhaustion</span>
+                            <span id="cost-progress-percent">0%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill cost-fill" id="cost-progress-fill"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pages Progress Bar -->
+                    <div class="progress-container">
+                        <div class="progress-labels">
+                            <span>Total Extraction Progress</span>
+                            <span id="page-progress-percent">0%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill page-fill" id="page-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Terminal Logs Card -->
+                <div class="card card-logs">
+                    <h2>Live Terminal Logs</h2>
+                    <div class="terminal-log" id="terminal-log">
+                        <div class="log-line system">[SYSTEM] Dashboard initialised. Ready to run.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Live Question Bank Preview -->
+            <div class="column-right">
+                <div class="card card-preview">
+                    <div class="preview-header">
+                        <h2>Extracted Question Bank</h2>
+                        <span class="badge" id="preview-count">0 Questions</span>
+                    </div>
+                    
+                    <div class="question-list" id="question-list">
+                        <!-- Questions will be injected dynamically here -->
+                        <div class="no-data">
+                            <p>No questions parsed yet. Start the parser to populate the question bank.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script for Live Operations -->
+    <script>
+        // DOM Elements
+        const budgetSlider = document.getElementById('budget-slider');
+        const budgetVal = document.getElementById('budget-val');
+        const btnStart = document.getElementById('btn-start');
+        const btnPause = document.getElementById('btn-pause');
+        const btnReset = document.getElementById('btn-reset');
+        
+        const statCost = document.getElementById('stat-cost');
+        const statPages = document.getElementById('stat-pages');
+        const statQuestions = document.getElementById('stat-questions');
+        const statDiagrams = document.getElementById('stat-diagrams');
+        
+        const costProgressFill = document.getElementById('cost-progress-fill');
+        const costProgressPercent = document.getElementById('cost-progress-percent');
+        const pageProgressFill = document.getElementById('page-progress-fill');
+        const pageProgressPercent = document.getElementById('page-progress-percent');
+        
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+        const terminalLog = document.getElementById('terminal-log');
+        const questionList = document.getElementById('question-list');
+        const previewCount = document.getElementById('preview-count');
+
+        let parserState = {
+            status: "idle",
+            running_cost: 0,
+            processed_pages: 0,
+            total_pages: 0,
+            budget_limit: 1.00,
+            extracted_count: 0,
+            diagrams_count: 0
+        };
+
+        // Render LaTeX equations in questions
+        function renderMath() {
+            if (window.renderMathInElement) {
+                renderMathInElement(questionList, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
+            }
+        }
+
+        // Add line to terminal log
+        function addLogLine(msg, type = "info") {
+            const line = document.createElement('div');
+            line.className = `log-line ${type}`;
+            const time = new Date().toLocaleTimeString();
+            line.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-msg">${msg}</span>`;
+            terminalLog.appendChild(line);
+            terminalLog.scrollTop = terminalLog.scrollHeight;
+        }
+
+        // Update UI from state
+        function updateUI(state, logs = []) {
+            parserState = state;
+            
+            // Stats
+            statCost.innerText = `$${state.running_cost.toFixed(3)}`;
+            statPages.innerText = `${state.processed_pages} / ${state.total_pages}`;
+            statQuestions.innerText = state.extracted_count;
+            statDiagrams.innerText = state.diagrams_count;
+            previewCount.innerText = `${state.extracted_count} Questions`;
+            
+            // Cost progress
+            const costPct = Math.min((state.running_cost / state.budget_limit) * 100, 100);
+            costProgressFill.style.width = `${costPct}%`;
+            costProgressPercent.innerText = `${costPct.toFixed(0)}%`;
+            if (costPct >= 90) {
+                costProgressFill.style.background = "var(--danger)";
+            } else if (costPct >= 75) {
+                costProgressFill.style.background = "var(--warning)";
+            } else {
+                costProgressFill.style.background = "var(--accent-gradient)";
+            }
+
+            // Total progress
+            const pagePct = state.total_pages > 0 ? (state.processed_pages / state.total_pages) * 100 : 0;
+            pageProgressFill.style.width = `${pagePct}%`;
+            pageProgressPercent.innerText = `${pagePct.toFixed(0)}%`;
+
+            // Status bar
+            statusText.innerText = state.status.toUpperCase();
+            statusIndicator.className = `status-indicator ${state.status}`;
+
+            // Buttons
+            if (state.status === "running") {
+                btnStart.disabled = true;
+                btnPause.disabled = false;
+            } else {
+                btnStart.disabled = false;
+                btnPause.disabled = true;
+            }
+
+            // Logs
+            if (logs && logs.length > 0) {
+                logs.forEach(log => {
+                    addLogLine(log.message, log.level);
+                });
+            }
+        }
+
+        // Fetch current status
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                updateUI(data.state, data.new_logs);
+                
+                if (data.new_questions && data.new_questions.length > 0) {
+                    injectQuestions(data.all_questions);
+                }
+            } catch (err) {
+                console.error("Error fetching state:", err);
+            }
+        }
+
+        // Inject questions into list view
+        function injectQuestions(questions) {
+            if (!questions || questions.length === 0) {
+                questionList.innerHTML = `<div class="no-data"><p>No questions parsed yet. Start the parser to populate the question bank.</p></div>`;
+                return;
+            }
+
+            questionList.innerHTML = "";
+            questions.forEach(q => {
+                const item = document.createElement('div');
+                item.className = "question-item";
+                
+                let optionsHtml = "";
+                if (q.options && q.options.length > 0) {
+                    optionsHtml = `<ul class="question-options">`;
+                    q.options.forEach(opt => {
+                        optionsHtml += `<li>${opt}</li>`;
+                    });
+                    optionsHtml += `</ul>`;
+                }
+
+                let diagramHtml = "";
+                if (q.diagram_base64) {
+                    diagramHtml = `<div class="question-diagram-container">
+                        <img src="data:image/png;base64,${q.diagram_base64}" alt="Diagram for Question ${q.question_number}" class="question-diagram">
+                    </div>`;
+                } else if (q.diagram_path) {
+                    diagramHtml = `<div class="question-diagram-container">
+                        <img src="/assets/${q.diagram_path.split('/').pop()}" alt="Diagram for Question ${q.question_number}" class="question-diagram">
+                    </div>`;
+                }
+
+                item.innerHTML = `
+                    <div class="q-meta">
+                        <span class="q-num">Q. ${q.question_number}</span>
+                        <span class="q-badge">${q.subject} ${q.year}</span>
+                        <span class="q-type">${q.type}</span>
+                        <span class="q-marks">${q.marks} Mark${q.marks > 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="q-body">
+                        ${q.question_text}
+                    </div>
+                    ${diagramHtml}
+                    ${optionsHtml}
+                `;
+                questionList.appendChild(item);
+            });
+            renderMath();
+        }
+
+        // Budget slider interaction
+        budgetSlider.addEventListener('input', async (e) => {
+            const val = parseFloat(e.target.value);
+            budgetVal.innerText = `$${val.toFixed(2)} USD`;
+            
+            try {
+                const res = await fetch('/api/limit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({limit: val})
+                });
+                const data = await res.json();
+                addLogLine(`Cost limit adjusted to $${val.toFixed(2)} USD`, "system");
+            } catch (err) {
+                console.error("Error setting limit:", err);
+            }
+        });
+
+        // Button clicks
+        btnStart.addEventListener('click', async () => {
+            addLogLine("Sending start instruction...", "system");
+            try {
+                const res = await fetch('/api/start', {method: 'POST'});
+                const data = await res.json();
+                addLogLine("Parser worker started.", "system");
+                fetchStatus();
+            } catch (err) {
+                addLogLine(`Start failed: ${err.message}`, "danger");
+            }
+        });
+
+        btnPause.addEventListener('click', async () => {
+            addLogLine("Sending pause instruction...", "system");
+            try {
+                const res = await fetch('/api/pause', {method: 'POST'});
+                const data = await res.json();
+                addLogLine("Parser worker paused.", "system");
+                fetchStatus();
+            } catch (err) {
+                addLogLine(`Pause failed: ${err.message}`, "danger");
+            }
+        });
+
+        btnReset.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to reset all parsed questions and state? This deletes the digital question bank.")) {
+                addLogLine("Sending reset instruction...", "system");
+                try {
+                    const res = await fetch('/api/reset', {method: 'POST'});
+                    const data = await res.json();
+                    addLogLine("Parser state and JSON bank fully reset.", "system");
+                    questionList.innerHTML = `<div class="no-data"><p>No questions parsed yet. Start the parser to populate the question bank.</p></div>`;
+                    fetchStatus();
+                } catch (err) {
+                    addLogLine(`Reset failed: ${err.message}`, "danger");
+                }
+            }
+        });
+
+        // Initialize status polling
+        setInterval(fetchStatus, 1500);
+        
+        // Initial fetch on load
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Fetch initial budget to match slider
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                budgetSlider.value = data.state.budget_limit;
+                budgetVal.innerText = `$${data.state.budget_limit.toFixed(2)} USD`;
+                injectQuestions(data.all_questions);
+                updateUI(data.state, data.new_logs);
+                addLogLine("Dashboard synced with server.", "system");
+            } catch (err) {
+                addLogLine("Server sync failed. Make sure the backend is running.", "danger");
+            }
+        });
+    </script>
+</body>
+</html>
