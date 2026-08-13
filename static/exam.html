@@ -194,6 +194,7 @@
                             <!-- Populated dynamically -->
                         </tbody>
                     </table>
+                    <div id="leetcode-pagination-controls"></div>
                 </div>
             </div>
         </section>
@@ -919,6 +920,10 @@
         }
 
         // 5. TAB 2: LeetCode Directory Browser
+        let leetCodeCurrentPage = 1;
+        const leetCodePageSize = 25;
+        let leetCodeFilteredQuestions = [];
+
         async function loadLeetCodeDirectory() {
             try {
                 const res = await fetchAuth('/api/questions');
@@ -930,20 +935,33 @@
                 topicDropdown.innerHTML = '<option value="">All Topics</option>' + 
                     Array.from(topicsSet).sort().map(t => `<option value="${t}">${t}</option>`).join('');
 
-                renderLeetCodeTable(allQuestions);
+                leetCodeCurrentPage = 1;
+                filterQuestions();
             } catch (err) {
                 console.error("Error loading LeetCode repository:", err);
             }
         }
 
         function renderLeetCodeTable(questions) {
+            leetCodeFilteredQuestions = questions;
             const body = document.getElementById('leetcode-table-body');
+            const paginationContainer = document.getElementById('leetcode-pagination-controls');
+
             if (questions.length === 0) {
                 body.innerHTML = `<tr><td colspan="7" class="empty-state">No matching questions found in the repository.</td></tr>`;
+                paginationContainer.innerHTML = '';
                 return;
             }
 
-            body.innerHTML = questions.map(q => {
+            const totalPages = Math.ceil(questions.length / leetCodePageSize);
+            if (leetCodeCurrentPage > totalPages) leetCodeCurrentPage = totalPages;
+            if (leetCodeCurrentPage < 1) leetCodeCurrentPage = 1;
+
+            const startIndex = (leetCodeCurrentPage - 1) * leetCodePageSize;
+            const endIndex = Math.min(startIndex + leetCodePageSize, questions.length);
+            const paginatedQuestions = questions.slice(startIndex, endIndex);
+
+            body.innerHTML = paginatedQuestions.map(q => {
                 let statusIcon = "";
                 if (q.status === 'solved') {
                     statusIcon = `<i class="fa-solid fa-circle-check score-high" title="Solved"></i>`;
@@ -976,6 +994,29 @@
                     </tr>
                 `;
             }).join('');
+
+            // Render pagination bar
+            paginationContainer.innerHTML = `
+                <div class="pagination-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+                    <span class="pagination-info" style="font-size: 0.85rem; color: #a29db8;">Showing ${startIndex + 1}-${endIndex} of ${questions.length} questions</span>
+                    <div class="pagination-buttons" style="display: flex; align-items: center; gap: 12px;">
+                        <button class="btn btn-secondary btn-xs" ${leetCodeCurrentPage === 1 ? 'disabled' : ''} onclick="changeLeetCodePage(${leetCodeCurrentPage - 1})" style="padding: 4px 10px; font-size: 0.8rem;">
+                            <i class="fa-solid fa-chevron-left"></i> Prev
+                        </button>
+                        <span class="pagination-current" style="font-size: 0.85rem; font-weight: 600; color: #f0edfa;">Page ${leetCodeCurrentPage} of ${totalPages}</span>
+                        <button class="btn btn-secondary btn-xs" ${leetCodeCurrentPage === totalPages ? 'disabled' : ''} onclick="changeLeetCodePage(${leetCodeCurrentPage + 1})" style="padding: 4px 10px; font-size: 0.8rem;">
+                            Next <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function changeLeetCodePage(page) {
+            leetCodeCurrentPage = page;
+            renderLeetCodeTable(leetCodeFilteredQuestions);
+            // Scroll table container to top
+            document.querySelector('.large-table').scrollTop = 0;
         }
 
         function filterQuestions() {
@@ -994,6 +1035,7 @@
                 return true;
             });
 
+            leetCodeCurrentPage = 1;
             renderLeetCodeTable(filtered);
         }
 
@@ -2546,7 +2588,7 @@
                 <button class="close-theater-btn" onclick="closeVideoTheater()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="youtube-iframe-container">
-                <iframe id="theater-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                <iframe id="theater-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope" allowfullscreen></iframe>
             </div>
         </div>
     </div>

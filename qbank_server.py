@@ -1038,7 +1038,18 @@ def get_questions_list(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Question)
+    query = db.query(
+        Question.id,
+        Question.subject,
+        Question.topic,
+        Question.difficulty,
+        Question.year,
+        Question.session,
+        Question.question_number,
+        Question.type,
+        Question.marks,
+        Question.question_text
+    )
     if subject:
         query = query.filter(Question.subject == subject)
     if topic:

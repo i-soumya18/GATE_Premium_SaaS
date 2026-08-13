@@ -40,10 +40,10 @@ class Question(Base):
     __tablename__ = "questions"
 
     id = Column(String, primary_key=True, index=True) # e.g. "CS_2009_Single_Session_Q38"
-    subject = Column(String, nullable=False) # e.g. "CS" or "DA"
-    topic = Column(String, default="General Aptitude")
-    difficulty = Column(String, default="Medium")
-    year = Column(Integer, nullable=False)
+    subject = Column(String, nullable=False, index=True) # e.g. "CS" or "DA"
+    topic = Column(String, default="General Aptitude", index=True)
+    difficulty = Column(String, default="Medium", index=True)
+    year = Column(Integer, nullable=False, index=True)
     session = Column(String, nullable=False)
     question_number = Column(Integer, nullable=False)
     type = Column(String, nullable=False) # MCQ, MSQ, NAT
@@ -62,7 +62,7 @@ class Attempt(Base):
     __tablename__ = "attempts"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     subject = Column(String, nullable=False)
     year = Column(Integer, nullable=False)
     session = Column(String, nullable=False) # e.g. Session 1 or "Custom Practice"
@@ -81,8 +81,8 @@ class Response(Base):
     __tablename__ = "responses"
 
     id = Column(Integer, primary_key=True, index=True)
-    attempt_id = Column(Integer, ForeignKey("attempts.id"), nullable=False)
-    question_id = Column(String, ForeignKey("questions.id"), nullable=False)
+    attempt_id = Column(Integer, ForeignKey("attempts.id"), nullable=False, index=True)
+    question_id = Column(String, ForeignKey("questions.id"), nullable=False, index=True)
     user_answer = Column(String, default="")
     is_correct = Column(Boolean, default=False)
     score = Column(Float, default=0.0)
@@ -95,8 +95,8 @@ class SoloResponse(Base):
     __tablename__ = "solo_responses"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    question_id = Column(String, ForeignKey("questions.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    question_id = Column(String, ForeignKey("questions.id"), nullable=False, index=True)
     user_answer = Column(String, nullable=False)
     is_correct = Column(Boolean, nullable=False)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
